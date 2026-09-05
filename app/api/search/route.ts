@@ -5,28 +5,14 @@ const BASE_URL = "https://api.themoviedb.org/3";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const query = searchParams.get("query");
-  const genre = searchParams.get("genre");
-  const sortBy = searchParams.get("sort_by") || "popularity.desc";
-  const year = searchParams.get("year");
+  const type = searchParams.get("type") || "multi"; // multi, movie, tv, person
   const page = searchParams.get("page") || "1";
 
-  let endpoint = "";
-
-  if (query) {
-    endpoint = `${BASE_URL}/search/movie?query=${encodeURIComponent(query)}&page=${page}&include_adult=false`;
-  } else {
-    const params = new URLSearchParams({
-      sort_by: sortBy,
-      page,
-      include_adult: "false",
-      include_video: "false",
-    });
-
-    if (genre) params.append("with_genres", genre);
-    if (year) params.append("primary_release_year", year);
-
-    endpoint = `${BASE_URL}/discover/movie?${params.toString()}`;
+  if (!query) {
+    return NextResponse.json({ results: [], total_results: 0, total_pages: 0 });
   }
+
+  const endpoint = `${BASE_URL}/search/${type}?query=${encodeURIComponent(query)}&page=${page}&include_adult=false`;
 
   try {
     const response = await fetch(endpoint, {
@@ -34,12 +20,12 @@ export async function GET(req: Request) {
         accept: "application/json",
         Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
       },
-      next: { revalidate: 3600 },
+      next: { revalidate: 600 },
     });
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: "Failed to fetch movies from TMDB" },
+        { error: "Failed to search TMDB" },
         { status: response.status }
       );
     }

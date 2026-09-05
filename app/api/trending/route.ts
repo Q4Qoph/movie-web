@@ -2,17 +2,12 @@ import { NextResponse } from "next/server";
 
 const BASE_URL = "https://api.themoviedb.org/3";
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const mediaType = searchParams.get("type") || "all"; // all, movie, tv
+  const timeWindow = searchParams.get("time") || "day"; // day, week
 
-  if (!id) {
-    return NextResponse.json({ error: "Movie ID is required" }, { status: 400 });
-  }
-
-  const endpoint = `${BASE_URL}/movie/${id}?append_to_response=videos,credits,similar,recommendations,watch/providers,release_dates`;
+  const endpoint = `${BASE_URL}/trending/${mediaType}/${timeWindow}`;
 
   try {
     const response = await fetch(endpoint, {
@@ -20,12 +15,12 @@ export async function GET(
         accept: "application/json",
         Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
       },
-      next: { revalidate: 3600 },
+      next: { revalidate: 1800 },
     });
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: "Failed to fetch movie details from TMDB" },
+        { error: "Failed to fetch trending from TMDB" },
         { status: response.status }
       );
     }

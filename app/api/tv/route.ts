@@ -7,25 +7,22 @@ export async function GET(req: Request) {
   const query = searchParams.get("query");
   const genre = searchParams.get("genre");
   const sortBy = searchParams.get("sort_by") || "popularity.desc";
-  const year = searchParams.get("year");
   const page = searchParams.get("page") || "1";
 
   let endpoint = "";
 
   if (query) {
-    endpoint = `${BASE_URL}/search/movie?query=${encodeURIComponent(query)}&page=${page}&include_adult=false`;
+    endpoint = `${BASE_URL}/search/tv?query=${encodeURIComponent(query)}&page=${page}&include_adult=false`;
   } else {
     const params = new URLSearchParams({
       sort_by: sortBy,
       page,
       include_adult: "false",
-      include_video: "false",
     });
 
     if (genre) params.append("with_genres", genre);
-    if (year) params.append("primary_release_year", year);
 
-    endpoint = `${BASE_URL}/discover/movie?${params.toString()}`;
+    endpoint = `${BASE_URL}/discover/tv?${params.toString()}`;
   }
 
   try {
@@ -39,7 +36,7 @@ export async function GET(req: Request) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: "Failed to fetch movies from TMDB" },
+        { error: "Failed to fetch TV shows from TMDB" },
         { status: response.status }
       );
     }

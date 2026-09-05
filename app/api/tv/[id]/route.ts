@@ -9,10 +9,10 @@ export async function GET(
   const { id } = await params;
 
   if (!id) {
-    return NextResponse.json({ error: "Movie ID is required" }, { status: 400 });
+    return NextResponse.json({ error: "TV Show ID is required" }, { status: 400 });
   }
 
-  const endpoint = `${BASE_URL}/movie/${id}?append_to_response=videos,credits,similar,recommendations,watch/providers,release_dates`;
+  const endpoint = `${BASE_URL}/tv/${id}?append_to_response=videos,credits,similar,recommendations,watch/providers`;
 
   try {
     const response = await fetch(endpoint, {
@@ -25,7 +25,7 @@ export async function GET(
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: "Failed to fetch movie details from TMDB" },
+        { error: "Failed to fetch TV details from TMDB" },
         { status: response.status }
       );
     }
