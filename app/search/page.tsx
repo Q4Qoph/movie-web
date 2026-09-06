@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Movie } from "@/interfaces/interfaces";
 import { searchMulti } from "@/services/api";
+import { updateSearchCount } from "@/services/appwrite";
 import MovieCard from "@/components/MovieCard";
 import { Search, X, Loader2, Film, Tv, Sparkles } from "lucide-react";
 
@@ -31,6 +32,10 @@ export default function SearchPage() {
         );
         setResults(filtered);
         setTotalResults(data.total_results || 0);
+
+        if (filtered.length > 0) {
+          updateSearchCount(query, filtered[0]).catch(() => {});
+        }
       } catch (err) {
         console.error("Search error", err);
       } finally {

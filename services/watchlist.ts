@@ -1,6 +1,10 @@
 "use client";
 
 import { WatchlistItem } from "@/interfaces/interfaces";
+import {
+  saveToCloudWatchlist,
+  removeFromCloudWatchlist,
+} from "./appwrite";
 
 const WATCHLIST_STORAGE_KEY = "movieweb_user_watchlist";
 const FAVORITES_STORAGE_KEY = "movieweb_user_favorites";
@@ -29,9 +33,11 @@ export const toggleWatchlist = (item: Omit<WatchlistItem, "addedAt">): boolean =
   if (index >= 0) {
     updated = current.filter((i) => i.id !== item.id);
     isAdded = false;
+    removeFromCloudWatchlist(item.id).catch(() => {});
   } else {
     updated = [{ ...item, addedAt: Date.now() }, ...current];
     isAdded = true;
+    saveToCloudWatchlist(item).catch(() => {});
   }
 
   try {

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Movie, Genre } from "@/interfaces/interfaces";
+import { Movie, Genre, TrendingMovie } from "@/interfaces/interfaces";
 import { fetchMovies, fetchTrending, fetchGenres } from "@/services/api";
+import { getTrendingMovies } from "@/services/appwrite";
 import HeroBanner from "@/components/HeroBanner";
 import MovieCard from "@/components/MovieCard";
 import GenreFilter from "@/components/GenreFilter";
@@ -11,6 +12,7 @@ import Link from "next/link";
 
 export default function HomePage() {
   const [trending, setTrending] = useState<Movie[]>([]);
+  const [appwriteTrending, setAppwriteTrending] = useState<TrendingMovie[]>([]);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
@@ -22,14 +24,19 @@ export default function HomePage() {
     async function loadInitialData() {
       try {
         setLoading(true);
-        const [trendingData, moviesData, genresData] = await Promise.all([
+        const [trendingData, moviesData, genresData, dbTrending] = await Promise.allSettled([
           fetchTrending("all", "day"),
           fetchMovies({ sortBy: "popularity.desc" }),
           fetchGenres("movie"),
+          getTrendingMovies(),
         ]);
-        setTrending(trendingData);
-        setMovies(moviesData);
-        setGenres(genresData);
+
+        if (trendingData.status === "fulfilled") setTrending(trendingData.value);
+        if (moviesData.status === "fulfilled") setMovies(moviesData.value);
+        if (genresData.status === "fulfilled") setGenres(genresData.value);
+        if (dbTrending.status === "fulfilled" && dbTrending.value && dbTrending.value.length > 0) {
+          setAppwriteTrending(dbTrending.value);
+        }
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to load movie catalog");
       } finally {
@@ -89,13 +96,44 @@ export default function HomePage() {
       {/* Featured Top Trending Hero */}
       <HeroBanner movie={featuredMovie} />
 
-      {/* Trending Ribbon / Carousel */}
-      {trending.length > 1 && (
+      {/* Appwrite Global Trending Searches */}
+      {appwriteTrending.length > 0 && (
         <section className="mb-14">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-orange-500/20 text-orange-400">
                 <Flame className="w-5 h-5" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                Top Trending Searches
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+            {appwriteTrending.map((item, index) => (
+              <div key={item.movie_id} className="flex-shrink-0 w-36 sm:w-44">
+                <MovieCard
+                  id={item.movie_id}
+                  title={item.title}
+                  poster_path={item.poster_url ? item.poster_url.replace("https://image.tmdb.org/t/p/w500", "") : null}
+                  vote_average={0}
+                  release_date={`#${index + 1} Searched`}
+                  media_type="movie"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* TMDB Trending Ribbon / Carousel */}
+      {trending.length > 1 && (
+        <section className="mb-14">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-accent/20 text-accent">
+                <Sparkles className="w-5 h-5" />
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                 Trending This Week
